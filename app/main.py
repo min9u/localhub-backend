@@ -13,9 +13,11 @@ from app.responses import (
     validation_exception_handler,
 )
 from app.routers import posts, places
+from seed import seed_all
 
 # 서버 시작 시 테이블이 없으면 자동 생성 (있으면 건너뜀)
 Base.metadata.create_all(bind=engine)
+seed_all()
 
 app = FastAPI(title="LocalHub API")
 
