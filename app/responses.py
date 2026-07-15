@@ -25,7 +25,7 @@ def _error_name(status_code: int) -> str:
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     """raise HTTPException(...) 이 발생하면 명세의 실패 형식으로 변환"""
     return JSONResponse(
-        status_code=exc.status_code,
+        status_code=exc.status_code,    
         content={
             "success": False,
             "statusCode": exc.status_code,
