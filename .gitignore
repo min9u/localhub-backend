@@ -213,7 +213,7 @@ Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
 
-# Dump file
+# Dump fileW
 *.stackdump
 
 # Folder config file
@@ -250,5 +250,9 @@ $RECYCLE.BIN/
 # Ignore all local history of files
 .history
 .ionide
+
+__pycache__/
+*.db
+.env
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,python,macos
