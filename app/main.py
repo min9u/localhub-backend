@@ -6,6 +6,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.database import Base, engine
 from app import models  # 이 import가 있어야 create_all이 4개 테이블을 인식합니다
 from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
 from app.responses import (
     success_response,
     http_exception_handler,
