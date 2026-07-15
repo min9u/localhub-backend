@@ -76,7 +76,7 @@ class Contest(Base):
     title = Column(String, nullable=False)
     image_url = Column(String)
     description = Column(String)
-    age_limit = Column(Integer)
+    age_limit = Column(String)
 
     place = relationship("Place")
 

@@ -103,8 +103,8 @@ def load_contests(db: Session) -> int:
             end_date=end,
             title=_clean(it.get("title")) or "(제목 없음)",
             image_url=_clean(it.get("first_image")),   # 축제 이미지도 확보
-            description=None,
-            age_limit=None,
+            description=_clean(it.get("description")),
+            age_limit=_clean(it.get("agelimit")),
         ))
         count += 1
 
