@@ -9,6 +9,7 @@ from app.responses import (
     http_exception_handler,
     validation_exception_handler,
 )
+from app.routers import posts
 
 # 서버 시작 시 테이블이 없으면 자동 생성 (있으면 건너뜀)
 Base.metadata.create_all(bind=engine)
@@ -19,6 +20,7 @@ app = FastAPI(title="LocalHub API")
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
+app.include_router(posts.router)
 
 @app.get("/")
 def health_check():
