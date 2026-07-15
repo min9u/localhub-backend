@@ -1,5 +1,9 @@
 from pydantic_settings import BaseSettings
 
+'''
+API 키, 프론트엔드 주소 같은 환경마다 달라지는 값을 관리
+'''
+
 
 class Settings(BaseSettings):
     # 쉼표로 구분된 허용 출처 목록 (CORS용)
