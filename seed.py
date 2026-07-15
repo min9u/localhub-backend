@@ -12,7 +12,9 @@ from app.database import SessionLocal, Base, engine
 from app import models
 from app.models import Place, Contest
 
-DATA_DIR = "data"
+# seed.py는 app/ 안에 있으므로, 한 단계 위(프로젝트 최상위)의 data 폴더를 가리킨다
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(BASE_DIR, "data")
 
 
 # ── 작은 헬퍼들 ─────────────────────────────────────
