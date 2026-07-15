@@ -77,7 +77,9 @@ def get_calendar(
             "imageUrl": c.image_url,
             "description": c.description,
             "ageLimit": c.age_limit,
-            "place": nested_place_dict(c.place),   # contests → places 조인
+            "address" : c.place.address,
+            "mapX": c.place.map_x,
+            "mapY" : c.place.map_y
         })
 
     return success_response(

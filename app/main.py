@@ -32,6 +32,7 @@ app.add_middleware(
     allow_methods=["*"],         # GET, POST, PATCH, DELETE 전부 허용
     allow_headers=["*"],
 )
+
 # ─────────────────────────────────────────────────
 
 # 실패 응답을 명세 형식으로 바꿔주는 핸들러 등록
