@@ -12,7 +12,7 @@ from app.responses import (
     http_exception_handler,
     validation_exception_handler,
 )
-from app.routers import posts, places
+from app.routers import posts, places, chat
 from seed import seed_all
 
 # 서버 시작 시 테이블이 없으면 자동 생성 (있으면 건너뜀)
@@ -41,6 +41,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 app.include_router(posts.router)
 app.include_router(places.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def health_check():
