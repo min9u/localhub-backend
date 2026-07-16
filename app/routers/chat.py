@@ -7,12 +7,12 @@ from app.database import get_db
 from app.schemas import ChatRequest
 from app.responses import success_response
 from app.chatbot import (
-    extract_params, run_query, serialize, build_answer, SMALL_TALK_ANSWER,
+    extract_plan, execute_plan, serialize_sets, build_answer, SMALL_TALK_ANSWER,
 )
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-# uvicorn 콘솔에 바로 찍히도록 uvicorn 로거에 편승 (별도 로깅 설정 불필요)
+# uvicorn 콘솔에 바로 찍히도록 uvicorn 로거에 편승
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -23,34 +23,30 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
     prev_questions = [m["content"] for m in history if m["role"] == "user"]
 
     try:
-        # ① 1차 호출 — 검색 조건 추출 (DB 원본은 전달하지 않음)
-        params = extract_params(payload.message, prev_questions)
-        logger.info(f"[chat] 질문: {payload.message!r} → 1차 추출: {params}")
+        # ① 1차 호출 — 실행 계획 추출 (DB 원본은 전달하지 않음)
+        plan = extract_plan(payload.message, prev_questions)
+        logger.info(f"[chat] 질문: {payload.message!r} → 실행 계획: {plan}")
 
-        # ②-a 조기 종료 — 잡담·무관 질문은 DB 조회·2차 호출 없이 고정 응답
-        if params["intent"] == "none":
-            logger.info("[chat] intent=none → DB 조회·2차 호출 생략 (조기 종료)")
+        # ②-a 조기 종료 — 계획이 비어 있으면(잡담·무관) DB 조회·2차 호출 생략
+        if not plan["queries"]:
+            logger.info("[chat] 빈 계획 → DB 조회·2차 호출 생략 (조기 종료)")
             return success_response(
                 data={
                     "answer": SMALL_TALK_ANSWER,
-                    "debug": {
-                        "params": params,
-                        "dbSearched": False,      # DB 서칭 단계를 안 거쳤음을 명시
-                        "rowCount": 0,
-                        "resultPreview": None,
-                        "aiCalls": 1,             # 1차 호출만 사용
-                    },
+                    "debug": {"plan": plan, "dbSearched": False,
+                              "rowCounts": [], "resultPreview": None, "aiCalls": 1},
                 },
                 message="챗봇 응답에 성공했습니다. (조기 종료)",
             )
 
-        # ②-b 서버가 템플릿 쿼리에 바인딩·실행 (AI는 SQL에 관여 안 함)
-        headers, rows = run_query(db, params)
-        result_text = serialize(headers, rows)
-        logger.info(f"[chat] DB 조회 실행 → {len(rows)}행 반환")
+        # ②-b 서버가 계획을 순차 실행 (near_prev는 직전 결과 좌표를 이어받음)
+        result_sets = execute_plan(db, plan)
+        result_text = serialize_sets(result_sets)
+        row_counts = [len(rows) for _, rows in result_sets]
+        logger.info(f"[chat] 계획 실행 완료 → 세트별 행 수: {row_counts}")
         logger.info(f"[chat] 2차 호출에 전달되는 결과:\n{result_text}")
 
-        # ③ 2차 호출 — 절단된 결과 + 다이어트된 히스토리로 답변 생성
+        # ③ 2차 호출 — 절단된 결과 세트들 + 다이어트된 히스토리로 답변 생성
         answer = build_answer(payload.message, history, result_text)
 
     except HTTPException:
@@ -62,12 +58,12 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
     return success_response(
         data={
             "answer": answer,
-            # debug 블록: 시연·개발용. 발표 후 제거하거나 아래 주석처럼 축소
+            # debug 블록: 시연·개발용. 발표 후 제거 가능
             "debug": {
-                "params": params,          # 1차 호출이 해석한 검색 조건
-                "dbSearched": True,        # DB 서칭 단계를 거쳤음
-                "rowCount": len(rows),     # 조회된 행 수 (0이면 '결과 없음' 답변의 근거)
-                "resultPreview": result_text,  # 2차 호출에 실제로 전달된 텍스트 그대로
+                "plan": plan,                  # 1차 호출이 수립한 실행 계획
+                "dbSearched": True,
+                "rowCounts": row_counts,       # 쿼리별 조회 행 수
+                "resultPreview": result_text,  # 2차 호출에 전달된 텍스트 그대로
                 "aiCalls": 2,
             },
         },
